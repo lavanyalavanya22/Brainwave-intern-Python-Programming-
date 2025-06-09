@@ -1,0 +1,159 @@
+import getpass
+import hashlib
+import random
+import time
+import datetime
+
+# User data with hashed passwords, attempts, lock status, balance, and transaction history
+users = {
+    "7022840566": {
+        "password_hash": hashlib.sha256("lav123".encode()).hexdigest(),
+        "pin": "8877",
+        "balance": 1500.0,
+        "attempts": 0,
+        "locked": False,
+        "transactions": []
+    },
+    "9019719244": {
+        "password_hash": hashlib.sha256("gani227".encode()).hexdigest(),
+        "pin": "4321",
+        "balance": 2500.0,
+        "attempts": 0,
+        "locked": False,
+        "transactions": []
+    }
+}
+
+last_transaction = None  # To store last action for receipt
+
+def log_transaction(user, txn_type, amount, target=None):
+    global last_transaction
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if target:
+        entry = f"{timestamp} - {txn_type} - ${amount:.2f} to {target}"
+    else:
+        entry = f"{timestamp} - {txn_type} - ${amount:.2f}"
+    users[user]["transactions"].append(entry)
+    last_transaction = entry
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def send_otp():
+    otp = str(random.randint(100000, 999999))
+    print(f"Your OTP is: {otp}")  # Simulated OTP display
+    return otp
+
+def authenticate():
+    print("Cardless ATM Login")
+    mobile = input("Enter your mobile number linked with bank and Aadhaar: ")
+
+    if mobile not in users:
+        print("Mobile number not found.\n")
+        return None
+
+    if users[mobile]["locked"]:
+        print("Account is locked due to multiple failed login attempts. Please contact the bank.\n")
+        return None
+
+    for _ in range(3):
+        password = getpass.getpass("Enter your password: ")
+        password_hash = hash_password(password)
+
+        if password_hash == users[mobile]["password_hash"]:
+            otp = send_otp()
+            entered_otp = input("Enter the OTP sent to your registered mobile: ")
+            if entered_otp == otp:
+                pin = input("Enter your 4-digit ATM PIN: ")
+                if pin == users[mobile]["pin"]:
+                    print("Login successful.")
+                    print("Welcome to cardless ATM transaction\n")
+                    users[mobile]["attempts"] = 0
+                    return mobile
+                else:
+                    print("Incorrect PIN.\n")
+                    return None
+            else:
+                print("Incorrect OTP.")
+                return None
+        else:
+            print("Incorrect password.")
+            users[mobile]["attempts"] += 1
+            remaining = 3 - users[mobile]["attempts"]
+            if remaining > 0:
+                print(f"You have {remaining} attempts left.\n")
+            else:
+                users[mobile]["locked"] = True
+                print("Your account has been locked due to multiple failed attempts.\n")
+                return None
+    return None
+
+def show_menu():
+    print("\nATM Menu")
+    print("1. Check Balance")
+    print("2. Deposit Money")
+    print("3. Withdraw Money")
+
+def check_balance(user):
+    amount = users[user]['balance']
+    print(f"Your current balance is: ${amount:.2f}")
+    log_transaction(user, "Balance Checked", 0)
+
+def deposit(user):
+    try:
+        amount = float(input("Enter amount to deposit: $"))
+        if amount <= 0:
+            print("Invalid deposit amount.")
+        else:
+            users[user]["balance"] += amount
+            print(f"${amount:.2f} deposited successfully.")
+            log_transaction(user, "Deposit", amount)
+    except ValueError:
+        print("Please enter a valid number.")
+
+def withdraw(user):
+    try:
+        amount = float(input("Enter amount to withdraw: $"))
+        if amount <= 0:
+            print("Invalid withdrawal amount.")
+        elif amount > users[user]["balance"]:
+            print("Insufficient balance.")
+        else:
+            users[user]["balance"] -= amount
+            print(f"${amount:.2f} withdrawn successfully.")
+            log_transaction(user, "Withdrawal", amount)
+    except ValueError:
+        print("Please enter a valid number.")
+
+def print_receipt(user):
+    print("\n=========== ATM RECEIPT ===========")
+    print(f"User: {user}")
+    print(f"Date: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    if last_transaction:
+        print(f"Last Transaction: {last_transaction}")
+    else:
+        print("No transaction performed.")
+    print("Thank you for using the Cardless ATM.")
+    print("===================================\n")
+
+def atm():
+    user = authenticate()
+    if not user:
+        return
+
+    show_menu()
+    choice = input("Choose an option (1-3): ").strip()
+
+    if choice == '1':
+        check_balance(user)
+    elif choice == '2':
+        deposit(user)
+    elif choice == '3':
+        withdraw(user)
+    else:
+        print("Invalid choice.")
+
+    print_receipt(user)
+
+if __name__ == "__main__":
+    atm()

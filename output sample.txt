@@ -1,0 +1,26 @@
+Cardless ATM Login
+Enter your mobile number linked with bank and Aadhaar: 7022840566
+Enter your password: 
+Your OTP is: 383904
+Enter the OTP sent to your registered mobile: 383904
+Enter your 4-digit ATM PIN: 8877
+Login successful.
+Welcome to cardless ATM transaction
+
+
+ATM Menu
+1. Check Balance
+2. Deposit Money
+3. Withdraw Money
+Choose an option (1-3): 2
+Enter amount to deposit: $400
+$400.00 deposited successfully.
+
+=========== ATM RECEIPT ===========
+User: 7022840566
+Date: 2025-06-09 13:52:30
+Last Transaction: 2025-06-09 13:52:30 - Deposit - $400.00
+Thank you for using the Cardless ATM.
+===================================
+
+
